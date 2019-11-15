@@ -1,0 +1,26 @@
+{
+  "name": "dvzakusilo/php-services-connector",
+  "type": "library",
+  "description": "Extensible library to connect to API services from PHP.",
+  "keywords": [],
+  "license": "BSD-3-Clause",
+  "authors": [
+    {
+      "name": "Denis Zakusilo",
+      "email": "DVZakusilo@gmail.com"
+    },
+    {
+      "name": "PHP Services Connector"
+    }
+  ],
+  "require": {
+    "php": "^7.0.0",
+    "guzzlehttp/guzzle": "~6.0"
+  },
+  "require-dev": {
+
+  },
+  "autoload": {
+    "psr-4": { "PSRVConnector\\": "src/" }
+  }
+}
