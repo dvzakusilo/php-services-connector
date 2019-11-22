@@ -16,66 +16,114 @@ class Connector implements ConnectorInterface
     /**
      * @var string $sApiKey Secret key for connection to service.
      */
-    private $sApiKey = '';
+    public $sApiKey = '';
     /**
      * @var string $sMethod Request method.
      */
-    private $sMethod = 'GET';
+    public $sMethod = 'POST';
     /**
      * @var string $sBaseUri Uri of service.
      */
-    private $sBaseUri = 'https://suggestions.dadata.ru/suggestions/api/4_1/';
+    public $sBaseUri = 'https://suggestions.dadata.ru/suggestions/api/4_1/';
+    /**
+     * @var string $sUri Relative uri.
+     */
+    public $sUri = 'rs';
+    /**
+     * @var array $arHeaders Type of document.
+     */
+    public $arHeaders = [
+        'Content-Type' => 'application/json',
+        'Content-Transfer-Encoding' => 'binary',
+        'MIME-Version' => '1.0',
+    ];
+    /**
+     * @var string $sSecretKey Key for connection.
+     */
+    public $sSecretKey = '';
+
     /**
      * @see \GuzzleHttp\RequestOptions
      * @var array $arOptions Connection params.
      */
-    private $arOptions = [];
+    public $arOptions = [];
 
 
     /**
      * @var Client $obConnection Connector to service.
      */
-    private $obConnection;
+    public $obConnection;
 
     /**
      * Connector constructor.
+     * @param string $sApiKey Key of API for connection to service.
      * @param array $arParams Array of configs for connection.
-     * { @internal [api_key, method, base_uri, options] }}
+     * { @param string $sSecretKey Secret key for connection to service.
+     *
+     * @internal ['method', 'base_uri', 'headers', 'options'] }}
      */
-    public function __construct(array $arParams = ['api_key', 'method', 'base_uri', 'options'])
+    public function __construct(
+        string $sApiKey,
+        string $sSecretKey,
+        array $arParams = [
+            'method' => '',
+            'base_uri' => '',
+            'headers' => [],
+            'options' => []
+        ]
+    )
     {
-        $this->setSApiKey($arParams['api_key']);
-        $this->setSMethod($arParams['method']);
-        $this->setSBaseUri($arParams['base_uri']);
-        $this->setArOptions($arParams['options']);
+        $this->setSApiKey($sApiKey);
+        $this->setSSecretKey($sSecretKey);
+        $this->setConnection($arParams);
     }
 
     /**
      * Method return connection to service.
      * @param array $arParams \GuzzleHttp\RequestOptions.
-     * @return Client|mixed
-     * @throws GuzzleException
      */
-    public function getConnection(
+    public function setConnection(
         array $arParams = []
-    ) : Client
+    )
     {
-        if(count($arParams) > 0) {
-            $arParams['base_uri'] = $arParams['base_uri'] ?? $this->getSBaseUri();
+//        If need reconnect to service.
+        if (count($arParams) > 0 || empty($this->obConnection)) {
+            $this->setSMethod($arParams['method']);
+            $this->setSBaseUri($arParams['base_uri']);
+            $this->setArOptions($arParams['options']);
+            $this->setArHeaders(['X-Secret' => $this->getSSecretKey(), 'Authorization' => 'Token ' . $this->getSApiKey()]);
+            $this->setArHeaders($arParams['headers']);
+            var_dump($this->getArHeaders());
+
+            $arParams['base_uri'] = $this->getSBaseUri();
             $obConnection = new Client($arParams);
         }
 
-        return $obConnection ?? $this->obConnection;
+        $this->obConnection = $obConnection ?? $this->obConnection;
     }
 
-    public function setQuery(string $sQuery): array
+    /**
+     * Helper method to execute deferred HTTP requests.
+     * @param string $sQuery Text of query.
+     * @param string $sUri Relative link.
+     *
+     * @return array
+     * @throws GuzzleException
+     */
+    public function setQuery(string $sQuery, string $sUri = ''): array
     {
-        // TODO: Implement setQuery() method.
-        return [];
+        $this->setSUri($sUri);
+        $httpResponse = $this->obConnection->request($this->getSMethod(), $this->getSUri(),
+            array(
+                'headers' => $this->getArHeaders(),
+                'body' => "[\"$sQuery\"]",
+            )
+        );
+        return((array) json_decode($httpResponse->getBody()));
     }
 
 
-    // Getters and Setters/
+    // Getters and Setters //
 
 
     /**
@@ -89,9 +137,9 @@ class Connector implements ConnectorInterface
     /**
      * @param string $sApiKey
      */
-    public function setSApiKey(string $sApiKey)
+    public function setSApiKey(string $sApiKey = '')
     {
-        $this->sApiKey = !empty($sApiKey) ?? $this->sApiKey;
+        $this->sApiKey = $sApiKey ?? $this->sApiKey;
     }
 
     /**
@@ -105,9 +153,9 @@ class Connector implements ConnectorInterface
     /**
      * @param string $sMethod
      */
-    public function setSMethod(string $sMethod)
+    public function setSMethod($sMethod = '')
     {
-        $this->sMethod = !empty($sMethod) ?? $this->sMethod;
+        $this->sMethod = $sMethod ?? $this->sMethod;
     }
 
     /**
@@ -121,9 +169,9 @@ class Connector implements ConnectorInterface
     /**
      * @param string $sBaseUri
      */
-    public function setSBaseUri(string $sBaseUri)
+    public function setSBaseUri($sBaseUri)
     {
-        $this->sBaseUri = !empty($sBaseUri) ?? $this->sBaseUri;
+        $this->sBaseUri = $sBaseUri ?? $this->sBaseUri;
     }
 
     /**
@@ -137,9 +185,57 @@ class Connector implements ConnectorInterface
     /**
      * @param array $arOptions
      */
-    public function setArOptions(array $arOptions)
+    public function setArOptions($arOptions = [])
     {
-        $this->arOptions = array_merge($arOptions, $this->arOptions);
+        $this->arOptions = array_merge($arOptions ?? $this->arOptions, $this->arOptions);
+    }
+
+    /**
+     * @return array
+     */
+    public function getArHeaders(): array
+    {
+        return $this->arHeaders;
+    }
+
+    /**
+     * @param array $arHeaders
+     */
+    public function setArHeaders($arHeaders = [])
+    {
+        $this->arHeaders = array_merge($arHeaders ?? $this->arHeaders, $this->arHeaders);
+    }
+
+    /**
+     * @return string
+     */
+    public function getSSecretKey(): string
+    {
+        return $this->sSecretKey;
+    }
+
+    /**
+     * @param string $sSecretKey
+     */
+    public function setSSecretKey($sSecretKey)
+    {
+        $this->sSecretKey = $sSecretKey ?? $this->sSecretKey;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSUri(): string
+    {
+        return $this->sUri;
+    }
+
+    /**
+     * @param string $sUri
+     */
+    public function setSUri(string $sUri = '')
+    {
+        $this->sUri = $sUri ?? $this->sUri;
     }
 
 }

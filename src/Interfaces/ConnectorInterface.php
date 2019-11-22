@@ -11,12 +11,12 @@ interface ConnectorInterface
      * @param array $arParams Array of connection parameters.
      * @return mixed
      */
-    public function getConnection(array $arParams = []);
+    public function setConnection(array $arParams = []);
 
     /**
      * Set query to rest server.
      * @param string $sQuery String to send.
      * @return array
      */
-    public function setQuery(string $sQuery) : array;
+    public function setQuery(string $sQuery, string $sUri);
 }
