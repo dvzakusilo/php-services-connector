@@ -79,7 +79,7 @@ class Connector implements ConnectorInterface
     }
 
     /**
-     * Method return connection to service.
+     * Method set connection to service.
      * @param array $arParams \GuzzleHttp\RequestOptions.
      */
     public function setConnection(
@@ -93,7 +93,6 @@ class Connector implements ConnectorInterface
             $this->setArOptions($arParams['options']);
             $this->setArHeaders(['X-Secret' => $this->getSSecretKey(), 'Authorization' => 'Token ' . $this->getSApiKey()]);
             $this->setArHeaders($arParams['headers']);
-            var_dump($this->getArHeaders());
 
             $arParams['base_uri'] = $this->getSBaseUri();
             $obConnection = new Client($arParams);
@@ -119,7 +118,7 @@ class Connector implements ConnectorInterface
                 'body' => "[\"$sQuery\"]",
             )
         );
-        return((array) json_decode($httpResponse->getBody()));
+        return ((array)json_decode($httpResponse->getBody()));
     }
 
 

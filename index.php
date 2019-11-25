@@ -5,20 +5,31 @@ use PSRVConnector\Connectors\Dadata\Connector;
 
 require 'vendor/autoload.php';
 
+/**
+ * Class TestConnect
+ */
 class TestConnect extends PSRVConnector\Service
 {
+    /**
+     * Use methods DaData API of standardization.
+     */
     use Clean;
 
     public function __construct()
     {
         parent::__construct(new Connector(
-                'cc2ff0b9a19ab1e01e7efb48b7f4f9f56ec8756a',
-                '1adaaf711f859b922c8d6327186480faa2bb3a2b',
+                'sApiKey',
+                'sSecretKey',
                 ['base_uri' => 'https://cleaner.dadata.ru/api/v1/']
             )
         );
     }
 
+    /**
+     * Method wrapper example.
+     * @param string $sBody
+     * @return array
+     */
     public function getDatByAddress(string $sBody)
     {
         return $this->getAddress($sBody);
