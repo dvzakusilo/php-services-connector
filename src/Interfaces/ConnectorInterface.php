@@ -17,7 +17,8 @@ interface ConnectorInterface
      * Set query to rest server.
      * @param string $sQuery String to send.
      * @param string $sUri Relative uri.
+     * @param string $sMethod Http method.
      * @return array
      */
-    public function setQuery(string $sQuery, string $sUri = '');
+    public function setQuery(string $sQuery, string $sUri = '', string $sMethod = '');
 }

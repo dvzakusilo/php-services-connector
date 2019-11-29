@@ -1,17 +1,17 @@
 <?php
 
-namespace PSRVConnector\Connectors\Dadata;
+namespace PSRVConnector\Connectors;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use PSRVConnector\Interfaces\ConnectorInterface;
 
 /**
- * Connector to DaData api service.
+ * Connector to ANY api service by GuzzleHTTP.
  * Class Connector
- * @package PSRVConnector\Connectors\Dadata
+ * @package PSRVConnector\Connectors
  */
-class Connector implements ConnectorInterface
+class GuzzleConnector implements ConnectorInterface
 {
     /**
      * @var string $sApiKey Secret key for connection to service.
@@ -24,11 +24,11 @@ class Connector implements ConnectorInterface
     /**
      * @var string $sBaseUri Uri of service.
      */
-    public $sBaseUri = 'https://suggestions.dadata.ru/suggestions/api/4_1/';
+    public $sBaseUri = '';
     /**
      * @var string $sUri Relative uri.
      */
-    public $sUri = 'rs';
+    public $sUri = '';
     /**
      * @var array $arHeaders Type of document.
      */
@@ -56,16 +56,14 @@ class Connector implements ConnectorInterface
 
     /**
      * Connector constructor.
-     * @param string $sApiKey Key of API for connection to service.
      * @param array $arParams Array of configs for connection.
      * { @param string $sSecretKey Secret key for connection to service.
-     *
      * @internal ['method', 'base_uri', 'headers', 'options'] }}
      */
     public function __construct(
-        string $sApiKey,
-        string $sSecretKey,
         array $arParams = [
+            'api_key' => '',
+            'secret_key' => '',
             'method' => '',
             'base_uri' => '',
             'headers' => [],
@@ -73,8 +71,9 @@ class Connector implements ConnectorInterface
         ]
     )
     {
-        $this->setSApiKey($sApiKey);
-        $this->setSSecretKey($sSecretKey);
+        $this->setArOptions($arParams);
+        $this->setSApiKey($arParams['api_key']);
+        $this->setSSecretKey($arParams['secret_key']);
         $this->setConnection($arParams);
     }
 
@@ -91,9 +90,7 @@ class Connector implements ConnectorInterface
             $this->setSMethod($arParams['method']);
             $this->setSBaseUri($arParams['base_uri']);
             $this->setArOptions($arParams['options']);
-            $this->setArHeaders(['X-Secret' => $this->getSSecretKey(), 'Authorization' => 'Token ' . $this->getSApiKey()]);
             $this->setArHeaders($arParams['headers']);
-
             $arParams['base_uri'] = $this->getSBaseUri();
             $obConnection = new Client($arParams);
         }
@@ -105,7 +102,7 @@ class Connector implements ConnectorInterface
      * Helper method to execute deferred HTTP requests.
      * @param string $sQuery Text of query.
      * @param string $sUri Relative link.
-     * @param string $sMethod Http method.
+     * @param string $sMethod Http method. If Empty, then get from global params.
      *
      * @return array
      * @throws GuzzleException
@@ -114,8 +111,7 @@ class Connector implements ConnectorInterface
     {
         $this->setSUri($sUri);
         $this->setSMethod($sMethod);
-        $httpResponse = $this->obConnection->request(
-            !empty($sMethod) ? $sMethod : $this->getSMethod(),
+        $httpResponse = $this->obConnection->request($this->getSMethod(),
             $this->getSUri(),
             array(
                 'headers' => $this->getArHeaders(),
@@ -156,9 +152,9 @@ class Connector implements ConnectorInterface
     /**
      * @param string $sMethod
      */
-    public function setSMethod($sMethod = '')
+    public function setSMethod($sMethod)
     {
-        $this->sMethod = $sMethod ?? $this->sMethod;
+        $this->sMethod = empty($sMethod) ?  $this->sMethod : $sMethod;
     }
 
     /**
